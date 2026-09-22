@@ -1,0 +1,34 @@
+@import "tailwindcss";
+
+@theme {
+  --color-panthere-gold: #d4a843;
+  --color-panthere-green: #2e7d32;
+  --color-panthere-dark: #1a1a2e;
+  --color-panthere-light: #f5f0e8;
+}
+
+body {
+  font-family: system-ui, -apple-system, sans-serif;
+  background-color: var(--color-panthere-light);
+  color: var(--color-panthere-dark);
+}
+
+/* Styles pour le streaming de la réponse */
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+.cursor-blink {
+  animation: blink 0.8s step-end infinite;
+}
+
+/* Scrollbar stylée */
+.chat-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.chat-scroll::-webkit-scrollbar-thumb {
+  background-color: var(--color-panthere-gold);
+  border-radius: 3px;
+}

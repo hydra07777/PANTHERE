@@ -1,0 +1,64 @@
+---
+titre: Équations du second degré — Cours complet
+matiere: mathématiques
+pays: Côte d'Ivoire
+niveau: lycée, terminale
+source: Programme officiel de mathématiques Terminale C (Côte d'Ivoire)
+---
+
+# Chapitre 3 : Équations et inéquations du second degré
+
+## 3.1 Définition
+
+Une équation du second degré à une inconnue réelle x est une équation qui peut s'écrire sous la forme :
+
+    ax² + bx + c = 0
+
+où a, b et c sont des nombres réels avec a ≠ 0.
+
+## 3.2 Discriminant
+
+Le discriminant Δ (delta) est défini par :
+
+    Δ = b² - 4ac
+
+## 3.3 Résolution selon le signe du discriminant
+
+**Cas 1 : Δ > 0**
+L'équation admet deux solutions réelles distinctes :
+    x₁ = (-b - √Δ) / (2a)
+    x₂ = (-b + √Δ) / (2a)
+
+**Cas 2 : Δ = 0**
+L'équation admet une solution réelle double :
+    x₀ = -b / (2a)
+
+**Cas 3 : Δ < 0**
+L'équation n'admet pas de solution réelle. Elle admet deux solutions complexes conjuguées.
+
+## 3.4 Factorisation
+
+Si Δ ≥ 0, on peut factoriser le trinôme :
+    ax² + bx + c = a(x - x₁)(x - x₂)
+
+## 3.5 Somme et produit des racines
+
+Si x₁ et x₂ sont les racines (réelles ou complexes) :
+    S = x₁ + x₂ = -b/a
+    P = x₁ × x₂ = c/a
+
+## 3.6 Exemple résolu
+
+Résoudre l'équation : 2x² - 4x - 6 = 0
+
+Étape 1 : Identifier a = 2, b = -4, c = -6
+Étape 2 : Calculer Δ = (-4)² - 4(2)(-6) = 16 + 48 = 64
+Étape 3 : Δ > 0, donc deux solutions réelles :
+    x₁ = (4 - √64) / 4 = (4 - 8) / 4 = -1
+    x₂ = (4 + √64) / 4 = (4 + 8) / 4 = 3
+
+## 3.7 Exercices d'application (à faire sans aide)
+
+1. Résoudre : 3x² + 5x - 2 = 0
+2. Résoudre : x² - 4x + 4 = 0
+3. Résoudre : x² + x + 1 = 0

@@ -1,0 +1,61 @@
+---
+titre: Exercices corrigés — Équations du second degré
+matiere: mathématiques
+pays: Côte d'Ivoire
+niveau: lycée, terminale
+source: Annales Baccalauréat — Côte d'Ivoire
+---
+
+# Exercices types Bac sur les équations du second degré
+
+## Exercice 1 (Niveau facile)
+Résoudre dans ℝ : x² - 5x + 6 = 0
+
+**Méthode :**
+1. a = 1, b = -5, c = 6
+2. Δ = (-5)² - 4(1)(6) = 25 - 24 = 1
+3. Δ > 0, deux solutions :
+   x₁ = (5 - 1) / 2 = 2
+   x₂ = (5 + 1) / 2 = 3
+
+**Vérification :** 2² - 5(2) + 6 = 4 - 10 + 6 = 0 ✓
+              3² - 5(3) + 6 = 9 - 15 + 6 = 0 ✓
+
+## Exercice 2 (Niveau moyen)
+Résoudre dans ℝ : 4x² - 12x + 9 = 0
+
+**Méthode :**
+1. a = 4, b = -12, c = 9
+2. Δ = (-12)² - 4(4)(9) = 144 - 144 = 0
+3. Δ = 0, une solution double :
+   x₀ = 12 / (2 × 4) = 12/8 = 3/2 = 1,5
+
+**Vérification :** 4(1,5)² - 12(1,5) + 9 = 4(2,25) - 18 + 9 = 9 - 18 + 9 = 0 ✓
+
+## Exercice 3 (Niveau difficile)
+Résoudre dans ℝ : -x² + 3x - 5 = 0
+
+**Méthode :**
+1. a = -1, b = 3, c = -5
+2. Δ = (3)² - 4(-1)(-5) = 9 - 20 = -11
+3. Δ < 0, donc pas de solution réelle.
+   L'équation n'admet pas de solution dans ℝ.
+
+## Exercice 4 (Contexte africain — agriculture)
+Un agriculteur veut clôturer un champ rectangulaire. La longueur mesure
+5 mètres de plus que la largeur. La surface totale est de 84 m².
+Quelles sont les dimensions du champ ?
+
+**Traduction mathématique :**
+Soit x la largeur. Alors la longueur = x + 5.
+Surface = x(x + 5) = 84
+Donc : x² + 5x - 84 = 0
+
+**Résolution :**
+a = 1, b = 5, c = -84
+Δ = 25 - 4(1)(-84) = 25 + 336 = 361
+√361 = 19
+x = (-5 - 19) / 2 = -12 (solution négative, impossible pour une largeur)
+x = (-5 + 19) / 2 = 7
+
+**Réponse :** Largeur = 7 m, Longueur = 12 m. Surface = 7 × 12 = 84 m² ✓

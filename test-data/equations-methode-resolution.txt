@@ -1,0 +1,40 @@
+---
+titre: Méthode de résolution — Identifier et appliquer le discriminant
+matiere: mathématiques
+pays: Côte d'Ivoire
+niveau: lycée, terminale
+source: Guide méthodologique — Mathématiques Terminale C
+---
+
+# Guide : Comment résoudre une équation du second degré
+
+## Méthode en 4 étapes
+
+### Étape 1 : Mettre l'équation sous forme canonique
+Vérifie que l'équation est bien de la forme ax² + bx + c = 0.
+Si ce n'est pas le cas, déplace tous les termes dans le membre de gauche.
+
+### Étape 2 : Identifier a, b, c
+- a est le coefficient de x² (toujours ≠ 0)
+- b est le coefficient de x
+- c est le terme constant
+
+### Étape 3 : Calculer le discriminant Δ = b² - 4ac
+Attention aux signes ! Si b est négatif, son carré est positif.
+
+### Étape 4 : Appliquer la formule selon le signe de Δ
+
+| Signe de Δ | Nombre de solutions | Formule |
+|---|---|---|
+| Δ > 0 | Deux solutions réelles | x = (-b ± √Δ) / (2a) |
+| Δ = 0 | Une solution double | x = -b / (2a) |
+| Δ < 0 | Aucune solution réelle (solutions complexes) | — |
+
+## Erreurs fréquentes à éviter
+
+❌ Oublier le signe négatif de b dans la formule
+❌ Confondre -b et -(b) quand b est déjà négatif
+❌ Diviser par a avant d'avoir calculé Δ
+❌ Oublier de vérifier que a ≠ 0
+
+✅ Conseil : écris toujours a, b, c explicitement avant de calculer Δ
