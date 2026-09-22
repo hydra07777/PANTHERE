@@ -1,137 +1,151 @@
 // ──────────────────────────────────────────────
 // API Route — /api/chat
-// Reçoit le message + historique, recherche le contexte RAG,
-// appelle Claude en streaming, retourne la réponse.
+// Reçoit le message + historique, recherche le contexte RAG
+// (en mémoire, sur les documents africains), appelle MiniMax-M3
+// en streaming, retourne la réponse en SSE.
 // ──────────────────────────────────────────────
 
 import { NextRequest, NextResponse } from "next/server";
-import Anthropic from "@anthropic-ai/sdk";
+import { getMiniMax, MODEL_NAME, hasApiKey } from "@/lib/minimax";
 import { SOCRATIC_SYSTEM_PROMPT } from "@/lib/prompts/socratic";
-import { searchRelevantContext, formatRAGContext } from "@/lib/rag/search";
-import { checkRateLimit, rateLimitHeaders } from "@/lib/rate-limit";
+import {
+  searchRelevantContext,
+  formatRAGContext,
+} from "@/lib/rag/search";
+import { checkRateLimit } from "@/lib/rate-limit";
 import type { ChatMessage } from "@/lib/rag/types";
+import { profilToContext, type ProfilEtudiant } from "@/lib/profil";
 
-// Initialiser le client Anthropic
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
-});
-
-// Modèle Claude
-const MODEL = "claude-sonnet-4-20250514";
-
-export const runtime = "edge";
+export const runtime = "nodejs"; // on a besoin du système de fichiers pour le RAG en mémoire
 export const dynamic = "force-dynamic";
 
+const MAX_HISTORY = 20;
+
 export async function POST(request: NextRequest) {
-  try {
-    // --- Rate limiting ---
-    const ip =
-      request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
-      request.headers.get("x-real-ip") ||
-      "unknown";
-
-    const { allowed, remaining } = checkRateLimit(ip);
-    const headers = rateLimitHeaders(ip);
-
-    if (!allowed) {
-      return NextResponse.json(
-        { error: "Trop de requêtes. Réessaie dans une minute." },
-        {
-          status: 429,
-          headers: { ...headers, "Content-Type": "application/json" },
-        }
-      );
-    }
-
-    // --- Parse du body ---
-    const body = await request.json();
-    const { message, history } = body as {
-      message: string;
-      history: ChatMessage[];
-    };
-
-    if (!message || typeof message !== "string") {
-      return NextResponse.json(
-        { error: "Message requis" },
-        { status: 400 }
-      );
-    }
-
-    // --- Recherche RAG ---
-    const ragContext = await searchRelevantContext(message, {
-      matiere: "mathématiques",
-      pays: "Côte d'Ivoire",
-      niveau: "lycée",
-    });
-    const ragFormatted = formatRAGContext(ragContext);
-
-    // --- Construction du prompt ---
-    const systemPrompt = ragFormatted
-      ? `${SOCRATIC_SYSTEM_PROMPT}\n\n${ragFormatted}`
-      : SOCRATIC_SYSTEM_PROMPT;
-
-    // --- Formatage de l'historique pour Claude ---
-    const formattedHistory = history.map((msg) => ({
-      role: msg.role as "user" | "assistant",
-      content: msg.content,
-    }));
-
-    // --- Appel à Claude en streaming ---
-    const stream = await anthropic.messages.stream({
-      model: MODEL,
-      system: systemPrompt,
-      max_tokens: 1024,
-      messages: [
-        ...formattedHistory,
-        { role: "user" as const, content: message },
-      ],
-    });
-
-    // --- Retourner le stream ---
-    const readableStream = new ReadableStream({
-      async start(controller) {
-        try {
-          for await (const event of stream) {
-            if (
-              event.type === "content_block_delta" &&
-              event.delta.type === "text_delta"
-            ) {
-              const data = JSON.stringify({
-                type: "text",
-                content: event.delta.text,
-              });
-              controller.enqueue(new TextEncoder().encode(`data: ${data}\n\n`));
-            }
-          }
-          controller.enqueue(new TextEncoder().encode("data: [DONE]\n\n"));
-          controller.close();
-        } catch (error) {
-          console.error("Erreur de streaming Claude:", error);
-          const errorData = JSON.stringify({
-            type: "error",
-            content: "Erreur lors de la génération de la réponse.",
-          });
-          controller.enqueue(
-            new TextEncoder().encode(`data: ${errorData}\n\n`)
-          );
-          controller.close();
-        }
-      },
-    });
-
-    return new NextResponse(readableStream, {
-      headers: {
-        "Content-Type": "text/event-stream",
-        "Cache-Control": "no-cache",
-        Connection: "keep-alive",
-        ...headers,
-      },
-    });
-  } catch (error) {
-    console.error("Erreur API chat:", error);
+  // ── Garde-fou clé API ──
+  if (!hasApiKey()) {
     return NextResponse.json(
-      { error: "Erreur interne du serveur" },
-      { status: 500 }
+      {
+        error:
+          "MiniMax non configuré : renseigne MINIMAX_API_KEY dans .env.local.",
+      },
+      { status: 503 }
     );
   }
+
+  // ── Rate limiting ──
+  const ip =
+    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+    request.headers.get("x-real-ip") ||
+    "unknown";
+  const limit = checkRateLimit(ip);
+  if (!limit.allowed) {
+    return NextResponse.json(
+      { error: "Trop de requêtes. Réessaie dans une minute." },
+      { status: 429 }
+    );
+  }
+
+  // ── Parsing ──
+    let body: ChatRequest;
+    try {
+      body = (await request.json()) as ChatRequest;
+    } catch {
+      return NextResponse.json({ error: "Body JSON invalide" }, { status: 400 });
+    }
+    const { message, history, profile } = body;
+    if (!message || typeof message !== "string") {
+      return NextResponse.json({ error: "Message requis" }, { status: 400 });
+    }
+
+    // ── RAG en mémoire ──
+    const ragFilters = {
+      matiere: profile?.matierePreferee ?? "mathematiques",
+      pays: profile?.pays ?? undefined,
+      niveau: profile?.niveau ?? undefined,
+    };
+    const ragContext = searchRelevantContext(message, ragFilters);
+    const ragFormatted = formatRAGContext(ragContext);
+
+    // ── Profil étudiant ──
+    const profilBlock = profile
+      ? `\n<profil_etudiant>\n${profilToContext(profile as ProfilEtudiant)}\n</profil_etudiant>`
+      : "";
+
+    // ── Prompt final ──
+    const systemPrompt = `${SOCRATIC_SYSTEM_PROMPT}${profilBlock}${ragFormatted ? `\n\n${ragFormatted}` : ""}`;
+
+  // ── Historique (tronqué, formaté pour OpenAI-compat) ──
+  const messages: Array<{ role: "user" | "assistant"; content: string }> = [
+    ...history.slice(-MAX_HISTORY).map((m: ChatMessage) => ({
+      role: m.role,
+      content: m.content,
+    })),
+    { role: "user" as const, content: message },
+  ];
+
+  // ── Appel MiniMax en streaming ──
+  let stream: Awaited<
+    ReturnType<ReturnType<typeof getMiniMax>["chat"]["completions"]["create"]>
+  >;
+  try {
+    stream = await getMiniMax().chat.completions.create({
+      model: MODEL_NAME,
+      messages: [{ role: "system", content: systemPrompt }, ...messages],
+      stream: true,
+      max_completion_tokens: 1024,
+      temperature: 0.5,
+    });
+  } catch (error) {
+    console.error("Erreur appel MiniMax:", error);
+    return NextResponse.json(
+      {
+        error:
+          "Impossible de joindre MiniMax. Vérifie ta clé et ta connexion internet.",
+      },
+      { status: 502 }
+    );
+  }
+
+  // ── Stream SSE vers le navigateur ──
+  const encoder = new TextEncoder();
+  const readable = new ReadableStream({
+    async start(controller) {
+      try {
+        for await (const chunk of stream) {
+          const delta = chunk.choices?.[0]?.delta?.content;
+          if (delta) {
+            controller.enqueue(
+              encoder.encode(`data: ${JSON.stringify({ type: "text", content: delta })}\n\n`)
+            );
+          }
+        }
+        controller.enqueue(encoder.encode(`data: [DONE]\n\n`));
+        controller.close();
+      } catch (error) {
+        console.error("Erreur de streaming:", error);
+        controller.enqueue(
+          encoder.encode(
+            `data: ${JSON.stringify({ type: "error", content: "Erreur pendant la génération." })}\n\n`
+          )
+        );
+        controller.close();
+      }
+    },
+  });
+
+  return new NextResponse(readable, {
+    headers: {
+      "Content-Type": "text/event-stream",
+      "Cache-Control": "no-cache, no-transform",
+      Connection: "keep-alive",
+    },
+  });
 }
+
+// Petit type local pour typer le body
+type ChatRequest = {
+  message: string;
+  history: ChatMessage[];
+  profile?: Partial<ProfilEtudiant>;
+};
