@@ -1,7 +1,8 @@
 // ──────────────────────────────────────────────
-// Types partagés pour le RAG
+// Types partagés — Panthère
 // ──────────────────────────────────────────────
 
+/** Un document pédagogique africain chargé dans la base locale. */
 export interface Document {
   id: string;
   titre: string;
@@ -10,39 +11,47 @@ export interface Document {
   niveau: string;
   source: string;
   contenu_brut: string;
-  created_at: string;
 }
 
+/** Un passage découpé d'un document, indexé pour la recherche. */
 export interface DocumentChunk {
   id: string;
   document_id: string;
   contenu: string;
-  embedding: number[] | null;
   position: number;
+  /** Mots-clés significatifs pré-extraits (sans stop words, sans accents). */
+  keywords: string[];
 }
 
+/** Résultat d'une recherche RAG (mémoire). */
 export interface SearchResult {
   chunk: DocumentChunk;
-  score: number; // similarité cosinus
+  score: number;
+  document: Document;
 }
 
+/** Contexte RAG formaté pour l'injection dans le prompt. */
 export interface RAGContext {
   passages: string[];
   sources: { titre: string; source: string }[];
 }
 
+/** Message d'historique de conversation. */
 export interface ChatMessage {
-  role: "user" | "assistant" | "system";
+  role: "user" | "assistant";
   content: string;
 }
 
+/** Body envoyé à /api/chat. */
 export interface ChatRequest {
   message: string;
   history: ChatMessage[];
-}
-
-export interface ChatResponse {
-  id: string;
-  content: string;
-  role: "assistant";
+  profile?: {
+    prenom: string;
+    pays: string;
+    ville: string;
+    niveau: string;
+    langue: string;
+    matierePreferee: string;
+  };
 }
