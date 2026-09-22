@@ -32,7 +32,7 @@ const DEFAULT_CONFIG: RateLimitConfig = {
 
 /**
  * Vérifie si une requête est dans les limites.
- * Retourne { allowed, remaining, resetInSeconds }.
+ * Incrémente le compteur de manière atomique et retourne l'état.
  */
 export function checkRateLimit(
   key: string,
@@ -50,11 +50,11 @@ export function checkRateLimit(
     return {
       allowed: true,
       remaining: config.maxRequests - 1,
-      resetInSeconds: config.windowMs / 1000,
+      resetInSeconds: Math.ceil(config.windowMs / 1000),
     };
   }
 
-  // Dans la fenêtre : incrémenter
+  // Dans la fenêtre : incrémenter puis juger
   entry.count += 1;
 
   if (entry.count > config.maxRequests) {
@@ -73,13 +73,24 @@ export function checkRateLimit(
 }
 
 /**
- * Crée un header RateLimit pour la réponse HTTP.
+ * Construit les en-têtes RateLimit pour une réponse HTTP.
+ * Lecture seule : n'incrémente pas le compteur (sinon, double-comptage
+ * à chaque requête HTTP qui passe par checkRateLimit + rateLimitHeaders).
  */
 export function rateLimitHeaders(key: string): Record<string, string> {
-  const result = checkRateLimit(key);
+  const now = Date.now();
+  const entry = store.get(key);
+  let remaining = DEFAULT_CONFIG.maxRequests;
+  let resetInSeconds = Math.ceil(DEFAULT_CONFIG.windowMs / 1000);
+
+  if (entry && entry.resetAt > now) {
+    remaining = Math.max(0, DEFAULT_CONFIG.maxRequests - entry.count);
+    resetInSeconds = Math.ceil((entry.resetAt - now) / 1000);
+  }
+
   return {
     "X-RateLimit-Limit": String(DEFAULT_CONFIG.maxRequests),
-    "X-RateLimit-Remaining": String(result.remaining),
-    "X-RateLimit-Reset": String(result.resetInSeconds),
+    "X-RateLimit-Remaining": String(remaining),
+    "X-RateLimit-Reset": String(resetInSeconds),
   };
 }
