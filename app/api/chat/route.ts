@@ -1,9 +1,10 @@
-// ──────────────────────────────────────────────
 // API Route — /api/chat
 // Reçoit le message + historique, recherche le contexte RAG
-// (en mémoire, sur les documents africains), appelle MiniMax-M3
+// (en mémoire, sur les documents africains), appelle Claude
 // en streaming, retourne la réponse en SSE.
-// ──────────────────────────────────────────────
+// Supporte les marqueurs [PLAN_PROPOSAL:] et [PROGRESS:].
+// Supporte aussi l'injection des plans d'apprentissage actifs
+// dans le system prompt pour que l'IA puisse marquer la progression.
 
 import { NextRequest, NextResponse } from "next/server";
 import { getMiniMax, MODEL_NAME, hasApiKey } from "@/lib/minimax";
@@ -47,33 +48,55 @@ export async function POST(request: NextRequest) {
   }
 
   // ── Parsing ──
-    let body: ChatRequest;
-    try {
-      body = (await request.json()) as ChatRequest;
-    } catch {
-      return NextResponse.json({ error: "Body JSON invalide" }, { status: 400 });
-    }
-    const { message, history, profile } = body;
-    if (!message || typeof message !== "string") {
-      return NextResponse.json({ error: "Message requis" }, { status: 400 });
-    }
+  let body: ChatRequest;
+  try {
+    body = (await request.json()) as ChatRequest;
+  } catch {
+    return NextResponse.json({ error: "Body JSON invalide" }, { status: 400 });
+  }
+  const { message, history, profile, activePlans } = body;
+  if (!message || typeof message !== "string") {
+    return NextResponse.json({ error: "Message requis" }, { status: 400 });
+  }
 
-    // ── RAG en mémoire ──
-    const ragFilters = {
-      matiere: profile?.matierePreferee ?? "mathematiques",
-      pays: profile?.pays ?? undefined,
-      niveau: profile?.niveau ?? undefined,
-    };
-    const ragContext = searchRelevantContext(message, ragFilters);
-    const ragFormatted = formatRAGContext(ragContext);
+  // ── RAG en mémoire ──
+  const ragFilters = {
+    matiere: profile?.matierePreferee ?? "mathematiques",
+    pays: profile?.pays ?? undefined,
+    niveau: profile?.niveau ?? undefined,
+  };
+  const ragContext = searchRelevantContext(message, ragFilters);
+  const ragFormatted = formatRAGContext(ragContext);
 
-    // ── Profil étudiant ──
-    const profilBlock = profile
-      ? `\n<profil_etudiant>\n${profilToContext(profile as ProfilEtudiant)}\n</profil_etudiant>`
+  // ── Profil étudiant ──
+  const profilBlock = profile
+    ? `\n<profil_etudiant>\n${profilToContext(profile as ProfilEtudiant)}\n</profil_etudiant>`
+    : "";
+
+  // ── Plans d'apprentissage actifs ──
+  const plansBlock =
+    activePlans && activePlans.length > 0
+      ? `\n<plans_apprentissage_actifs>\n${JSON.stringify(
+          activePlans.map((p) => ({
+            id: p.id,
+            concept: p.concept,
+            points: p.points.map((pt) => ({
+              id: pt.id,
+              titre: pt.titre,
+              sousPoints: pt.sousPoints.map((sp) => ({
+                id: sp.id,
+                titre: sp.titre,
+                statut: sp.statut,
+              })),
+            })),
+          })),
+          null,
+          2
+        )}\n</plans_apprentissage_actifs>`
       : "";
 
-    // ── Prompt final ──
-    const systemPrompt = `${SOCRATIC_SYSTEM_PROMPT}${profilBlock}${ragFormatted ? `\n\n${ragFormatted}` : ""}`;
+  // ── Prompt final ──
+  const systemPrompt = `${SOCRATIC_SYSTEM_PROMPT}${profilBlock}${plansBlock ? `\n\n${plansBlock}` : ""}${ragFormatted ? `\n\n${ragFormatted}` : ""}`;
 
   // ── Historique (tronqué, formaté pour OpenAI-compat) ──
   const messages: Array<{ role: "user" | "assistant"; content: string }> = [
@@ -116,7 +139,9 @@ export async function POST(request: NextRequest) {
           const delta = chunk.choices?.[0]?.delta?.content;
           if (delta) {
             controller.enqueue(
-              encoder.encode(`data: ${JSON.stringify({ type: "text", content: delta })}\n\n`)
+              encoder.encode(
+                `data: ${JSON.stringify({ type: "text", content: delta })}\n\n`
+              )
             );
           }
         }
@@ -148,4 +173,13 @@ type ChatRequest = {
   message: string;
   history: ChatMessage[];
   profile?: Partial<ProfilEtudiant>;
+  activePlans?: Array<{
+    id: string;
+    concept: string;
+    points: Array<{
+      id: string;
+      titre: string;
+      sousPoints: Array<{ id: string; titre: string; statut: string }>;
+    }>;
+  }>;
 };
