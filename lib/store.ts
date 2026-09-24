@@ -9,6 +9,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import type { ProfilEtudiant } from "./profil";
+import type { LearningPlan, LearningPlanDraft } from "./learning-plan/types";
 
 // ─── Types ───
 export interface Message {
@@ -17,6 +18,10 @@ export interface Message {
   content: string;
   createdAt: string;
   topics?: string[]; // concepts détectés (Phase B)
+  /** Marqueur [PROGRESS:] parsé si présent. */
+  progress?: { planId: string; sousPointId: string };
+  /** Marqueur [PLAN_PROPOSAL:] parsé si présent. */
+  planProposal?: string;
 }
 
 export interface Conversation {
@@ -36,7 +41,7 @@ export interface Progression {
 
 // ─── Wrapper IndexedDB minimaliste ───
 const DB_NAME = "panthere";
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 
 function openDB(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
@@ -52,6 +57,13 @@ function openDB(): Promise<IDBDatabase> {
       }
       if (!db.objectStoreNames.contains("progression")) {
         db.createObjectStore("progression", { keyPath: "matiere" });
+      }
+      if (!db.objectStoreNames.contains("learning_plans")) {
+        const planStore = db.createObjectStore("learning_plans", {
+          keyPath: "id",
+        });
+        planStore.createIndex("createdAt", "createdAt");
+        planStore.createIndex("concept", "concept", { unique: false });
       }
     };
     req.onsuccess = () => resolve(req.result);
@@ -191,6 +203,71 @@ export async function recordTopics(
   const updated: Progression = { ...existing, concepts };
   await updateProgression(updated);
   return updated;
+}
+
+// ─── Plans d'apprentissage (store "learning_plans") ───
+
+/** Liste tous les plans d'apprentissage, triés du plus récent au plus ancien. */
+export async function listLearningPlans(): Promise<LearningPlan[]> {
+  const all = await dbAll<LearningPlan>("learning_plans");
+  return all.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+}
+
+/** Récupère un plan par son id. */
+export async function getLearningPlan(
+  id: string
+): Promise<LearningPlan | undefined> {
+  return dbGet<LearningPlan>("learning_plans", id);
+}
+
+/** Crée un plan à partir d'un LearningPlanDraft généré par l'IA.
+ *  Attribue les IDs p1.sous1, etc., et enregistre en IndexedDB. */
+export async function createLearningPlan(
+  draft: LearningPlanDraft,
+  conversationId?: string
+): Promise<LearningPlan> {
+  const now = new Date().toISOString();
+  const points = draft.points.map((p, i) => ({
+    id: `p${i + 1}`,
+    titre: p.titre,
+    description: p.description,
+    sousPoints: p.sousPoints.map((sp, j) => ({
+      id: `p${i + 1}.${j + 1}`,
+      titre: sp.titre,
+      questionInitiale: sp.questionInitiale,
+      statut: "a_venir" as const,
+    })),
+  }));
+  const plan: LearningPlan = {
+    id: makeId(),
+    concept: draft.concept,
+    matiere: draft.matiere,
+    objectif: draft.objectif,
+    points,
+    statut: "actif",
+    conversationId,
+    createdAt: now,
+    updatedAt: now,
+  };
+  await dbPut("learning_plans", plan);
+  return plan;
+}
+
+/** Met à jour un plan (utilisé pour les statuts de sous-points). */
+export async function saveLearningPlan(plan: LearningPlan): Promise<void> {
+  const updated = { ...plan, updatedAt: new Date().toISOString() };
+  await dbPut("learning_plans", updated);
+}
+
+/** Supprime un plan. */
+export async function deleteLearningPlan(id: string): Promise<void> {
+  await dbDelete("learning_plans", id);
+}
+
+/** Récupère tous les plans actifs (non terminés). */
+export async function listActiveLearningPlans(): Promise<LearningPlan[]> {
+  const all = await listLearningPlans();
+  return all.filter((p) => p.statut !== "complete");
 }
 
 // ─── Hooks React ───
