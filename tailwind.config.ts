@@ -22,11 +22,6 @@ export default {
         gold: "#d4a843",
         "gold-soft": "#faf3e0",
         terracotta: "#c75d3f",
-        // legacy aliases (transition douce, à supprimer lot 3)
-        "panthere-green": "#2e7d32",
-        "panthere-gold": "#d4a843",
-        "panthere-dark": "#0d0c0c",
-        "panthere-light": "#f4f4f4",
       },
       fontFamily: {
         sans: ["Inter", "system-ui", "-apple-system", "Segoe UI", "sans-serif"],

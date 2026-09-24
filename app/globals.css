@@ -8,7 +8,7 @@
 
 @theme {
   /* ── Couleurs ── */
-  --color-ink: #0d0c0c;          /* texte principal (remplace panthere-dark) */
+  --color-ink: #0d0c0c;          /* texte principal */
   --color-ink-soft: #2a2a2a;     /* texte secondaire */
   --color-muted: #6e6e6e;        /* texte tertiaire */
   --color-muted-soft: #9b9b9b;   /* texte quaternaire / placeholder */

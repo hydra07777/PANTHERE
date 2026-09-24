@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { ArrowRight, GraduationCap } from "lucide-react";
+import { Button, Logo, Input, Select } from "@/components/ui";
 import {
   PAYS,
   VILLES_RDC,
@@ -26,6 +28,7 @@ export default function OnboardingPage() {
   const [submitting, setSubmitting] = useState(false);
 
   const villes = PAYS[pays].villes;
+  const langueActive = LANGUES.find((l) => l.value === langue);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -45,153 +48,128 @@ export default function OnboardingPage() {
   };
 
   return (
-    <main className="min-h-screen flex items-center justify-center px-4 py-12">
-      <form
-        onSubmit={handleSubmit}
-        className="w-full max-w-lg bg-white rounded-2xl shadow-lg p-8 space-y-5"
-      >
-        <header className="text-center mb-2">
-          <h1 className="text-3xl font-bold text-panthere-dark">🐆 Bienvenue</h1>
-          <p className="text-gray-500 mt-1">
-            Quelques infos pour personnaliser ton apprentissage.
-          </p>
-        </header>
+    <main className="min-h-screen flex flex-col">
+      {/* Header */}
+      <header className="px-6 sm:px-10 py-5">
+        <Logo />
+      </header>
 
-        <Field label="Comment t'appelles-tu ?">
-          <input
-            type="text"
-            value={prenom}
-            onChange={(e) => setPrenom(e.target.value)}
-            placeholder="Ex : Aïcha, Joseph, Grâce..."
-            required
-            className="input"
-          />
-        </Field>
-
-        <div className="grid grid-cols-2 gap-3">
-          <Field label="Pays">
-            <select
-              value={pays}
-              onChange={(e) => {
-                setPays(e.target.value as Pays);
-                setVille("");
-              }}
-              className="input"
-            >
-              {Object.keys(PAYS).map((p) => (
-                <option key={p} value={p}>
-                  {p}
-                </option>
-              ))}
-            </select>
-          </Field>
-
-          <Field label="Ville">
-            <select
-              value={ville}
-              onChange={(e) => setVille(e.target.value)}
-              className="input"
-            >
-              <option value="">— Choisir —</option>
-              {(pays === "République Démocratique du Congo"
-                ? VILLES_RDC
-                : villes
-              ).map((v) => (
-                <option key={v} value={v}>
-                  {v}
-                </option>
-              ))}
-            </select>
-          </Field>
-        </div>
-
-        <Field label="Niveau scolaire">
-          <select
-            value={niveau}
-            onChange={(e) => setNiveau(e.target.value as Niveau)}
-            className="input"
-          >
-            {NIVEAUX.map((n) => (
-              <option key={n.value} value={n.value}>
-                {n.label}
-              </option>
-            ))}
-          </select>
-        </Field>
-
-        <Field label="Langue de travail">
-          <select
-            value={langue}
-            onChange={(e) => setLangue(e.target.value as Langue)}
-            className="input"
-          >
-            {LANGUES.map((l) => (
-              <option key={l.value} value={l.value}>
-                {l.label}
-              </option>
-            ))}
-          </select>
-          <p className="text-xs text-gray-500 mt-1">
-            {
-              LANGUES.find((l) => l.value === langue)?.description
-            }
-          </p>
-        </Field>
-
-        <Field label="Matière principale">
-          <select
-            value={matiere}
-            onChange={(e) => setMatiere(e.target.value)}
-            className="input"
-          >
-            <option value="mathematiques">Mathématiques</option>
-            <option value="physique">Physique-Chimie</option>
-            <option value="svt">Sciences de la Vie et de la Terre</option>
-            <option value="francais">Français</option>
-            <option value="anglais">Anglais</option>
-          </select>
-        </Field>
-
-        <button
-          type="submit"
-          disabled={submitting || !prenom.trim()}
-          className="w-full bg-panthere-green text-white py-3 rounded-lg font-semibold hover:bg-green-700 disabled:opacity-50 transition-colors"
+      {/* Contenu */}
+      <div className="flex-1 flex items-center justify-center px-4 py-8">
+        <form
+          onSubmit={handleSubmit}
+          className="w-full max-w-xl bg-surface border border-border rounded-xl shadow-xs p-7 animate-fade-up"
         >
-          {submitting ? "..." : "Commencer à apprendre →"}
-        </button>
+          <header className="mb-6">
+            <div className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-forest-soft text-forest mb-3">
+              <GraduationCap size={18} strokeWidth={1.75} />
+            </div>
+            <h1 className="font-display text-2xl font-medium tracking-tight text-ink">
+              Bienvenue.
+            </h1>
+            <p className="text-[14px] text-muted mt-1">
+              Quelques infos pour personnaliser ton apprentissage.
+            </p>
+          </header>
 
-        <style>{`
-          .input {
-            width: 100%;
-            border: 1px solid #d1d5db;
-            border-radius: 0.5rem;
-            padding: 0.625rem 0.75rem;
-            background: white;
-            transition: border-color 0.15s;
-          }
-          .input:focus {
-            outline: none;
-            border-color: var(--color-panthere-gold);
-          }
-        `}</style>
-      </form>
+          <div className="space-y-4">
+            <Input
+              label="Comment t'appelles-tu ?"
+              name="prenom"
+              value={prenom}
+              onChange={(e) => setPrenom(e.target.value)}
+              placeholder="Ex : Aïcha, Joseph, Grâce…"
+              required
+            />
+
+            <div className="grid grid-cols-2 gap-3">
+              <Select
+                label="Pays"
+                name="pays"
+                value={pays}
+                onChange={(e) => {
+                  setPays(e.target.value as Pays);
+                  setVille("");
+                }}
+              >
+                {Object.keys(PAYS).map((p) => (
+                  <option key={p} value={p}>
+                    {p}
+                  </option>
+                ))}
+              </Select>
+
+              <Select
+                label="Ville"
+                name="ville"
+                value={ville}
+                onChange={(e) => setVille(e.target.value)}
+              >
+                <option value="">— Choisir —</option>
+                {(pays === "République Démocratique du Congo"
+                  ? VILLES_RDC
+                  : villes
+                ).map((v) => (
+                  <option key={v} value={v}>
+                    {v}
+                  </option>
+                ))}
+              </Select>
+            </div>
+
+            <Select
+              label="Niveau scolaire"
+              name="niveau"
+              value={niveau}
+              onChange={(e) => setNiveau(e.target.value as Niveau)}
+            >
+              {NIVEAUX.map((n) => (
+                <option key={n.value} value={n.value}>
+                  {n.label}
+                </option>
+              ))}
+            </Select>
+
+            <Select
+              label="Langue de travail"
+              name="langue"
+              value={langue}
+              onChange={(e) => setLangue(e.target.value as Langue)}
+              hint={langueActive?.description}
+            >
+              {LANGUES.map((l) => (
+                <option key={l.value} value={l.value}>
+                  {l.label}
+                </option>
+              ))}
+            </Select>
+
+            <Select
+              label="Matière principale"
+              name="matiere"
+              value={matiere}
+              onChange={(e) => setMatiere(e.target.value)}
+            >
+              <option value="mathematiques">Mathématiques</option>
+              <option value="physique">Physique-Chimie</option>
+              <option value="svt">Sciences de la Vie et de la Terre</option>
+              <option value="francais">Français</option>
+              <option value="anglais">Anglais</option>
+            </Select>
+          </div>
+
+          <Button
+            type="submit"
+            size="lg"
+            fullWidth
+            className="mt-7"
+            disabled={submitting || !prenom.trim()}
+          >
+            {submitting ? "Préparation…" : "Commencer à apprendre"}
+            <ArrowRight size={16} strokeWidth={2.25} />
+          </Button>
+        </form>
+      </div>
     </main>
-  );
-}
-
-function Field({
-  label,
-  children,
-}: {
-  label: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <label className="block">
-      <span className="text-sm font-medium text-gray-700 mb-1 block">
-        {label}
-      </span>
-      {children}
-    </label>
   );
 }
