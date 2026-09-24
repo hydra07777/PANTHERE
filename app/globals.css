@@ -1,34 +1,155 @@
 @import "tailwindcss";
 
+/* ──────────────────────────────────────────────
+   Panthère — Design tokens
+   Inspiré Dribbble : fond gris chaud, surfaces blanches,
+   ombres discrètes, hiérarchie par poids.
+   ────────────────────────────────────────────── */
+
 @theme {
-  --color-panthere-gold: #d4a843;
-  --color-panthere-green: #2e7d32;
-  --color-panthere-dark: #1a1a2e;
-  --color-panthere-light: #f5f0e8;
+  /* ── Couleurs ── */
+  --color-ink: #0d0c0c;          /* texte principal (remplace panthere-dark) */
+  --color-ink-soft: #2a2a2a;     /* texte secondaire */
+  --color-muted: #6e6e6e;        /* texte tertiaire */
+  --color-muted-soft: #9b9b9b;   /* texte quaternaire / placeholder */
+  --color-bg: #f4f4f4;           /* fond principal (Dribbble-style) */
+  --color-surface: #ffffff;      /* cartes, surfaces élevées */
+  --color-surface-sunk: #fafafa; /* surface enfoncée (input, sidebar) */
+  --color-border: #e5e5e5;       /* bordures standards */
+  --color-border-warm: #ececec;  /* bordures très douces */
+
+  /* Signature : identité Panthère (cohérent avec audience RDC) */
+  --color-forest: #2e7d32;       /* action primaire */
+  --color-forest-hover: #256b29;
+  --color-forest-soft: #e8f1e9;  /* fond badges forest */
+  --color-gold: #d4a843;         /* accent (focus, badges socratique) */
+  --color-gold-soft: #faf3e0;
+  --color-terracotta: #c75d3f;   /* signalétique douce (acquis) */
+
+  /* ── Typographie ── */
+  --font-display: "Fraunces", ui-serif, Georgia, serif;
+  --font-sans: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  /* ── Ombres (Dribbble : très discrètes) ── */
+  --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.04);
+  --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.05), 0 1px 2px -1px rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 8px -2px rgb(0 0 0 / 0.06), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+  --shadow-lg: 0 10px 20px -4px rgb(0 0 0 / 0.08), 0 4px 8px -4px rgb(0 0 0 / 0.05);
+
+  /* ── Rayons ── */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+  --radius-full: 9999px;
+
+  /* ── Motion ── */
+  --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+}
+
+/* ── Reset & base ── */
+html {
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
 body {
-  font-family: system-ui, -apple-system, sans-serif;
-  background-color: var(--color-panthere-light);
-  color: var(--color-panthere-dark);
+  background-color: var(--color-bg);
+  color: var(--color-ink);
+  font-feature-settings: "ss01";
 }
 
-/* Styles pour le streaming de la réponse */
+/* Fraunces : variation italique pour la touche "papier" */
+.font-display {
+  font-family: var(--font-display);
+  font-feature-settings: "ss01", "ss02";
+  letter-spacing: -0.015em;
+}
+
+/* ── Animations ── */
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes pulse-soft {
+  0%, 100% { opacity: 0.4; }
+  50%      { opacity: 0.8; }
+}
+
 @keyframes blink {
   0%, 100% { opacity: 1; }
-  50% { opacity: 0; }
+  50%      { opacity: 0; }
 }
 
-.cursor-blink {
-  animation: blink 0.8s step-end infinite;
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
 }
 
-/* Scrollbar stylée */
-.chat-scroll::-webkit-scrollbar {
-  width: 6px;
+.animate-fade-up {
+  animation: fade-up 320ms var(--ease-out-soft) both;
 }
 
+.animate-fade-in {
+  animation: fade-in 240ms var(--ease-out-soft) both;
+}
+
+.animate-blink {
+  animation: blink 1s step-end infinite;
+}
+
+.animate-pulse-soft {
+  animation: pulse-soft 1.8s ease-in-out infinite;
+}
+
+.animate-shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--color-surface-sunk) 0%,
+    #ececec 50%,
+    var(--color-surface-sunk) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.6s ease-in-out infinite;
+}
+
+/* Stagger pour listes de messages */
+.stagger > * {
+  animation: fade-up 320ms var(--ease-out-soft) both;
+}
+.stagger > *:nth-child(1) { animation-delay: 0ms; }
+.stagger > *:nth-child(2) { animation-delay: 40ms; }
+.stagger > *:nth-child(3) { animation-delay: 80ms; }
+.stagger > *:nth-child(4) { animation-delay: 120ms; }
+.stagger > *:nth-child(5) { animation-delay: 160ms; }
+.stagger > *:nth-child(6) { animation-delay: 200ms; }
+.stagger > *:nth-child(7) { animation-delay: 240ms; }
+.stagger > *:nth-child(8) { animation-delay: 280ms; }
+
+/* ── Focus ring unifié ── */
+*:focus-visible {
+  outline: 2px solid var(--color-gold);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* ── Scrollbar (chat) ── */
+.chat-scroll::-webkit-scrollbar { width: 6px; }
+.chat-scroll::-webkit-scrollbar-track { background: transparent; }
 .chat-scroll::-webkit-scrollbar-thumb {
-  background-color: var(--color-panthere-gold);
+  background-color: #d8d8d8;
   border-radius: 3px;
+  transition: background-color 200ms var(--ease-out-soft);
+}
+.chat-scroll::-webkit-scrollbar-thumb:hover {
+  background-color: #b8b8b8;
 }
