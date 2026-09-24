@@ -1,11 +1,12 @@
-// Bulle de message dans le chat.
-// User : fond forest, texte blanc, aligné à droite.
-// Assistant : surface blanche, bordure, texte ink, aligné à gauche.
-// Marque Panthère au-dessus de la bulle assistant.
-
 "use client";
 
+// Bulle de message dans le chat.
+// User : fond forest, texte blanc, aligné à droite.
+// Assistant : surface blanche, bordure, texte ink formaté en Markdown,
+// aligné à gauche. Marque Panthère au-dessus de la bulle assistant.
+
 import { Logo } from "./Logo";
+import { Markdown } from "./Markdown";
 import { cn } from "@/lib/cn";
 
 interface MessageBubbleProps {
@@ -16,6 +17,8 @@ interface MessageBubbleProps {
 
 export function MessageBubble({ role, content, streaming = false }: MessageBubbleProps) {
   if (role === "user") {
+    // L'utilisateur tape en texte brut — pas de Markdown pour éviter
+    // que **`** affiché dans une question ne se mette à styliser.
     return (
       <div className="flex justify-end animate-fade-up">
         <div
@@ -42,11 +45,10 @@ export function MessageBubble({ role, content, streaming = false }: MessageBubbl
           className={cn(
             "px-4 py-2.5 rounded-lg rounded-tl-sm",
             "bg-surface text-ink border border-border",
-            "text-[14.5px] leading-relaxed",
-            "shadow-xs whitespace-pre-wrap"
+            "shadow-xs"
           )}
         >
-          {content}
+          <Markdown source={content} />
           {streaming && (
             <span className="inline-block w-[2px] h-[1em] bg-ink ml-0.5 align-middle animate-blink" />
           )}

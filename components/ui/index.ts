@@ -10,3 +10,6 @@ export { IconButton } from "./IconButton";
 export { Skeleton } from "./Skeleton";
 export { ConversationItem } from "./ConversationItem";
 export { MessageBubble } from "./MessageBubble";
+export { PlanProposal } from "./PlanProposal";
+export { Markdown } from "./Markdown";
+export { ThinkingIndicator } from "./ThinkingIndicator";
