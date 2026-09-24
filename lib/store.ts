@@ -22,6 +22,8 @@ export interface Message {
   progress?: { planId: string; sousPointId: string };
   /** Marqueur [PLAN_PROPOSAL:] parsé si présent. */
   planProposal?: string;
+  /** Bloc de raisonnement <think>...</think> extrait de la réponse. */
+  think?: string;
 }
 
 export interface Conversation {

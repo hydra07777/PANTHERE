@@ -4,21 +4,30 @@
 // User : fond forest, texte blanc, aligné à droite.
 // Assistant : surface blanche, bordure, texte ink formaté en Markdown,
 // aligné à gauche. Marque Panthère au-dessus de la bulle assistant.
+// Optionnellement, un bloc "think" (raisonnement de l'IA) est rendu
+// dans un dropdown repliable en bas de la bulle.
 
 import { Logo } from "./Logo";
 import { Markdown } from "./Markdown";
+import { ThinkDropdown } from "./ThinkDropdown";
 import { cn } from "@/lib/cn";
 
 interface MessageBubbleProps {
   role: "user" | "assistant";
   content: string;
+  think?: string;
   streaming?: boolean;
 }
 
-export function MessageBubble({ role, content, streaming = false }: MessageBubbleProps) {
+export function MessageBubble({
+  role,
+  content,
+  think,
+  streaming = false,
+}: MessageBubbleProps) {
   if (role === "user") {
     // L'utilisateur tape en texte brut — pas de Markdown pour éviter
-    // que **`** affiché dans une question ne se mette à styliser.
+    // que `**` affiché dans une question ne se mette à styliser.
     return (
       <div className="flex justify-end animate-fade-up">
         <div
@@ -51,6 +60,9 @@ export function MessageBubble({ role, content, streaming = false }: MessageBubbl
           <Markdown source={content} />
           {streaming && (
             <span className="inline-block w-[2px] h-[1em] bg-ink ml-0.5 align-middle animate-blink" />
+          )}
+          {think && think.trim().length > 0 && !streaming && (
+            <ThinkDropdown content={think} />
           )}
         </div>
       </div>

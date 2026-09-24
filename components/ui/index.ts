@@ -13,3 +13,4 @@ export { MessageBubble } from "./MessageBubble";
 export { PlanProposal } from "./PlanProposal";
 export { Markdown } from "./Markdown";
 export { ThinkingIndicator } from "./ThinkingIndicator";
+export { ThinkDropdown } from "./ThinkDropdown";

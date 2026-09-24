@@ -47,6 +47,7 @@ import {
   extractProgressMark,
   stripPlanMarkers,
 } from "@/lib/learning-plan/markers";
+import { splitThinkBlocks } from "@/lib/chat-utils";
 
 export default function ChatPage() {
   const router = useRouter();
@@ -299,20 +300,23 @@ export default function ChatPage() {
       }
 
       // ── Extraction des marqueurs ──
-      const displayContent = stripPlanMarkers(fullContent);
-      const planProposal = extractPlanProposal(fullContent);
-      const progressMark = extractProgressMark(fullContent);
-      const topics = extractTopics(fullContent);
+            const stripped = stripPlanMarkers(fullContent);
+            const { visible: visibleContent, think: thinkContent } =
+              splitThinkBlocks(stripped);
+            const planProposal = extractPlanProposal(fullContent);
+            const progressMark = extractProgressMark(fullContent);
+            const topics = extractTopics(fullContent);
 
-      const assistantMessage: Message = {
-        id: makeId(),
-        role: "assistant",
-        content: displayContent,
-        createdAt: new Date().toISOString(),
-        topics: topics.length ? topics : undefined,
-        planProposal: planProposal ?? undefined,
-        progress: progressMark ?? undefined,
-      };
+            const assistantMessage: Message = {
+              id: makeId(),
+              role: "assistant",
+              content: visibleContent,
+              createdAt: new Date().toISOString(),
+              topics: topics.length ? topics : undefined,
+              planProposal: planProposal ?? undefined,
+              progress: progressMark ?? undefined,
+              think: thinkContent || undefined,
+            };
       setMessages([...updatedMessages, assistantMessage]);
       setStreamingContent("");
       setStreamingStartedAt(null);
@@ -530,9 +534,13 @@ export default function ChatPage() {
 
             <div className="space-y-4 stagger">
               {messages.map((msg) => (
-                <div key={msg.id}>
-                  <MessageBubble role={msg.role} content={msg.content} />
-                  {msg.role === "assistant" && msg.planProposal && (
+                              <div key={msg.id}>
+                                <MessageBubble
+                                  role={msg.role}
+                                  content={msg.content}
+                                  think={msg.think}
+                                />
+                                {msg.role === "assistant" && msg.planProposal && (
                     <PlanProposal
                       concept={msg.planProposal}
                       profil={{
